@@ -8,42 +8,37 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder,
-  ChannelType,
-  PermissionsBitField,
   Events,
-  AttachmentBuilder,
 } = require("discord.js");
 
-// ===== WEB SERVER (Render) =====
+// ===== WEB SERVER (Para manter o Render ativo) =====
 const app = express();
+const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
   res.send("Purple Store online!");
 });
 
-app.get("/status", (req, res) => {
-  res.send("OK");
-});
-
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🌐 Purple Store web ligada na porta ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🌐 Servidor Web rodando na porta ${PORT}`);
 });
 
 // ===== DISCORD BOT =====
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers, // Necessário para gerenciar cargos
+  ],
 });
 
 const verificacoes = new Map();
 
 client.once(Events.ClientReady, () => {
-  console.log(`✅ Purple Store logado como ${client.user.tag}`);
+  console.log(`✅ Logado como ${client.user.tag}`);
+  client.user.setActivity('Purple Store');
 });
 
-// ===== FUNÇÕES =====
+// ===== FUNÇÕES AUXILIARES =====
 function gerarCodigo() {
   const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let codigo = "";
@@ -59,16 +54,15 @@ function gerarOpcoes(codigoCorreto) {
   return [...opcoes].sort(() => Math.random() - 0.5);
 }
 
-// ===== EVENTOS =====
+// ===== TRATAMENTO DE INTERAÇÕES =====
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
+    // 1. Comandos de Barra (Slash Commands)
     if (interaction.isChatInputCommand()) {
       if (interaction.commandName === "verificacao") {
         const embed = new EmbedBuilder()
           .setTitle("🔐 Sistema de Verificação")
-          .setDescription(
-            "Clique no botão abaixo para verificar sua conta."
-          )
+          .setDescription("Clique no botão abaixo para iniciar sua verificação na **Purple Store**.")
           .setColor("#7d3cff");
 
         const row = new ActionRowBuilder().addComponents(
@@ -78,11 +72,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
             .setStyle(ButtonStyle.Primary)
         );
 
-        return interaction.reply({ embeds: [embed], components: [row] });
+        await interaction.reply({ embeds: [embed], components: [row] });
       }
+      
+      // Adicione aqui a lógica para /ticket e /pagamentos se desejar futuramente
     }
 
+    // 2. Botões
     if (interaction.isButton()) {
+      // Iniciar processo
       if (interaction.customId === "iniciar_verificacao") {
         const codigo = gerarCodigo();
         const opcoes = gerarOpcoes(codigo);
@@ -91,7 +89,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const embed = new EmbedBuilder()
           .setTitle("🔐 Confirme o código")
-          .setDescription(`Código: **${codigo}**`)
+          .setDescription(`Selecione o código correspondente: **${codigo}**`)
           .setColor("#7d3cff");
 
         const row = new ActionRowBuilder().addComponents(
@@ -110,48 +108,54 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
+      // Validar código selecionado
       if (interaction.customId.startsWith("verificar_")) {
         const escolhido = interaction.customId.replace("verificar_", "");
         const correto = verificacoes.get(interaction.user.id);
 
         if (escolhido !== correto) {
           return interaction.reply({
-            content: "❌ Código errado.",
+            content: "❌ Código incorreto. Tente iniciar a verificação novamente.",
             ephemeral: true,
           });
         }
 
-        const cargo = await interaction.guild.roles.fetch(
-          process.env.VERIFICADO_ROLE_ID
-        );
+        const cargoId = process.env.VERIFICADO_ROLE_ID;
+        const cargo = interaction.guild.roles.cache.get(cargoId);
+
+        if (!cargo) {
+          return interaction.reply({
+            content: "❌ Erro: Cargo de verificação não encontrado. Verifique o ID no painel do Render.",
+            ephemeral: true,
+          });
+        }
 
         await interaction.member.roles.add(cargo);
+        verificacoes.delete(interaction.user.id);
 
         return interaction.reply({
-          content: "✅ Verificado!",
+          content: "✅ Verificação concluída com sucesso! Bem-vindo(a).",
           ephemeral: true,
         });
       }
     }
   } catch (err) {
-    console.log("ERRO:", err);
+    console.error("Erro na Interação:", err);
   }
 });
 
-// ===== LOGIN COM RECONEXÃO =====
+// ===== INICIALIZAÇÃO =====
 async function iniciarBot() {
   if (!process.env.DISCORD_TOKEN) {
-    console.log("❌ TOKEN NÃO ENCONTRADO");
+    console.error("❌ Erro: DISCORD_TOKEN não configurado nas variáveis de ambiente.");
     return;
   }
 
   try {
-    console.log("🔑 Tentando logar...");
     await client.login(process.env.DISCORD_TOKEN);
-    console.log("🤖 BOT LOGADO COM SUCESSO");
   } catch (err) {
-    console.log("❌ ERRO AO LOGAR, tentando novamente em 5s...");
-    setTimeout(iniciarBot, 5000);
+    console.error("❌ Falha ao logar:", err);
+    setTimeout(iniciarBot, 10000); // Tenta novamente em 10 segundos
   }
 }
 
