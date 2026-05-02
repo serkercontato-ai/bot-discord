@@ -17,6 +17,20 @@ const {
 
 const app = express();
 
+app.get("/", (req, res) => {
+  res.send("Purple Store online!");
+});
+
+app.get("/status", (req, res) => {
+  res.send("OK");
+});
+
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🌐 Purple Store web ligada na porta ${PORT}`);
+});
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
@@ -67,9 +81,7 @@ async function gerarTranscript(channel) {
     return Buffer.from(texto, "utf8");
   }
 
-  const ordenadas = mensagens.sort(
-    (a, b) => a.createdTimestamp - b.createdTimestamp
-  );
+  const ordenadas = mensagens.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
   for (const msg of ordenadas.values()) {
     const data = new Date(msg.createdTimestamp).toLocaleString("pt-BR");
@@ -97,9 +109,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       if (interaction.commandName === "verificacao") {
         const embed = new EmbedBuilder()
           .setTitle("🔐 Sistema de Verificação")
-          .setDescription(
-            "Seja bem-vindo!\n\nPara acessar o servidor, clique no botão abaixo e complete a verificação.\n\n• Isso garante mais segurança para todos."
-          )
+          .setDescription("Seja bem-vindo!\n\nPara acessar o servidor, clique no botão abaixo e complete a verificação.\n\n• Isso garante mais segurança para todos.")
           .setColor("#7d3cff")
           .setFooter({ text: "Purple Store • Sistema Automático" });
 
@@ -117,9 +127,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       if (interaction.commandName === "ticket") {
         const embed = new EmbedBuilder()
           .setTitle("🎫 Purple Store • Central de Atendimento")
-          .setDescription(
-            "🎟️ **Central de Atendimento**\n\nSelecione abaixo o tipo de atendimento.\n\nNossa equipe responderá o mais rápido possível."
-          )
+          .setDescription("🎟️ **Central de Atendimento**\n\nSelecione abaixo o tipo de atendimento.\n\nNossa equipe responderá o mais rápido possível.")
           .setColor("#7d3cff")
           .setFooter({ text: "Purple Store • Sistema de Tickets" });
 
@@ -128,24 +136,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
             .setCustomId("menu_ticket")
             .setPlaceholder("Escolha uma opção")
             .addOptions(
-              {
-                label: "Compras",
-                description: "Solicitar orçamento ou adquirir serviços",
-                value: "compras",
-                emoji: "💰",
-              },
-              {
-                label: "Parcerias",
-                description: "Interessado em realizar uma parceria",
-                value: "parcerias",
-                emoji: "🤝",
-              },
-              {
-                label: "Suporte",
-                description: "Precisa de ajuda ou reportar problema",
-                value: "suporte",
-                emoji: "🛠️",
-              }
+              { label: "Compras", description: "Solicitar orçamento ou adquirir serviços", value: "compras", emoji: "💰" },
+              { label: "Parcerias", description: "Interessado em realizar uma parceria", value: "parcerias", emoji: "🤝" },
+              { label: "Suporte", description: "Precisa de ajuda ou reportar problema", value: "suporte", emoji: "🛠️" }
             )
         );
 
@@ -153,28 +146,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (interaction.commandName === "pagamentos") {
-        const pix =
-          "00020126580014br.gov.bcb.pix0136d4b9c2d6-9cd3-4cad-9e74-3d115193ea315204000053039865802BR5916SG202501082028146009Sao Paulo610901227-20062240520daqr22003294131437866304B230";
+        const pix = "00020126580014br.gov.bcb.pix0136d4b9c2d6-9cd3-4cad-9e74-3d115193ea315204000053039865802BR5916SG202501082028146009Sao Paulo610901227-20062240520daqr22003294131437866304B230";
 
-        const qr = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=20&data=${encodeURIComponent(
-          pix
-        )}`;
+        const qr = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=20&data=${encodeURIComponent(pix)}`;
 
-        const banner =
-          "https://cdn.discordapp.com/attachments/1446330885002625064/1499590937788158154/content.png?ex=69f55a64&is=69f408e4&hm=d0668d84cb6b17ce5773df7af88c8bf098d313725a23703bdd0ead471fed87eb&";
+        const banner = "https://cdn.discordapp.com/attachments/1446330885002625064/1499590937788158154/content.png?ex=69f55a64&is=69f408e4&hm=d0668d84cb6b17ce5773df7af88c8bf098d313725a23703bdd0ead471fed87eb&";
 
         const embedInfo = new EmbedBuilder()
           .setTitle("💳 Purple Store • Pagamentos")
           .setDescription(
             `💰 **Forma de pagamento:** Pix\n\n` +
-              `Escaneie o QR Code abaixo ou copie o código Pix.\n\n` +
-              `📋 **Pix Copia e Cola:**\n\`\`\`${pix}\`\`\`\n` +
-              `⚠️ **Regras importantes:**\n` +
-              `• O pagamento deve ser feito pelo próprio comprador.\n` +
-              `• Não aceitamos comprovante editado, cortado ou ilegível.\n` +
-              `• Após pagar, envie o comprovante neste ticket.\n` +
-              `• Aguarde a confirmação da equipe.\n\n` +
-              `💜 Obrigado por escolher a Purple Store.`
+            `Escaneie o QR Code abaixo ou copie o código Pix.\n\n` +
+            `📋 **Pix Copia e Cola:**\n\`\`\`${pix}\`\`\`\n` +
+            `⚠️ **Regras importantes:**\n` +
+            `• O pagamento deve ser feito pelo próprio comprador.\n` +
+            `• Não aceitamos comprovante editado, cortado ou ilegível.\n` +
+            `• Após pagar, envie o comprovante neste ticket.\n` +
+            `• Aguarde a confirmação da equipe.\n\n` +
+            `💜 Obrigado por escolher a Purple Store.`
           )
           .setColor("#7d3cff")
           .setImage(banner);
@@ -185,16 +174,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setColor("#7d3cff")
           .setImage(qr);
 
-        await enviarLog(
-          interaction.guild,
-          "💳 Pagamentos usado",
-          `👤 Usuário: ${interaction.user}\n📍 Canal: ${interaction.channel}`,
-          "#7d3cff"
-        );
+        await enviarLog(interaction.guild, "💳 Pagamentos usado", `👤 Usuário: ${interaction.user}\n📍 Canal: ${interaction.channel}`, "#7d3cff");
 
-        return interaction.reply({
-          embeds: [embedInfo, embedQr],
-        });
+        return interaction.reply({ embeds: [embedInfo, embedQr] });
       }
     }
 
@@ -213,12 +195,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setTitle("🔐 Confirmação de Segurança")
           .setDescription(
             `Clique no botão que corresponde ao código abaixo:\n\n` +
-              `📝 **Código:** \`${codigo}\`\n\n` +
-              `Você tem **2 minutos** para confirmar.\n\n` +
-              `Hoje às ${new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`
+            `📝 **Código:** \`${codigo}\`\n\n` +
+            `Você tem **2 minutos** para confirmar.\n\n` +
+            `Hoje às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
           )
           .setColor("#7d3cff");
 
@@ -231,64 +210,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
           )
         );
 
-        return interaction.reply({
-          embeds: [embed],
-          components: [row],
-          ephemeral: true,
-        });
+        return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
       }
 
       if (interaction.customId.startsWith("verificar_")) {
         const escolhido = interaction.customId.replace("verificar_", "");
         const correto = verificacoes.get(interaction.user.id);
 
-        if (!correto) {
-          return interaction.reply({
-            content: "❌ Sua verificação expirou.",
-            ephemeral: true,
-          });
-        }
+        if (!correto) return interaction.reply({ content: "❌ Sua verificação expirou.", ephemeral: true });
+        if (escolhido !== correto) return interaction.reply({ content: "❌ Código incorreto.", ephemeral: true });
 
-        if (escolhido !== correto) {
-          return interaction.reply({
-            content: "❌ Código incorreto.",
-            ephemeral: true,
-          });
-        }
+        const cargo = await interaction.guild.roles.fetch(process.env.VERIFICADO_ROLE_ID).catch(() => null);
 
-        const cargo = await interaction.guild.roles
-          .fetch(process.env.VERIFICADO_ROLE_ID)
-          .catch(() => null);
-
-        if (!cargo) {
-          return interaction.reply({
-            content: "❌ Cargo não encontrado.",
-            ephemeral: true,
-          });
-        }
+        if (!cargo) return interaction.reply({ content: "❌ Cargo não encontrado.", ephemeral: true });
 
         await interaction.member.roles.add(cargo);
         verificacoes.delete(interaction.user.id);
 
-        await enviarLog(
-          interaction.guild,
-          "🔐 Usuário verificado",
-          `👤 Usuário: ${interaction.user}\n🆔 ID: \`${interaction.user.id}\`\n✅ Cargo entregue: ${cargo}`,
-          "#2ecc71"
-        );
+        await enviarLog(interaction.guild, "🔐 Usuário verificado", `👤 Usuário: ${interaction.user}\n🆔 ID: \`${interaction.user.id}\`\n✅ Cargo entregue: ${cargo}`, "#2ecc71");
 
-        return interaction.reply({
-          content: "✅ Verificação concluída! Acesso liberado.",
-          ephemeral: true,
-        });
+        return interaction.reply({ content: "✅ Verificação concluída! Acesso liberado.", ephemeral: true });
       }
 
       if (interaction.customId === "fechar_ticket") {
         await interaction.deferReply({ ephemeral: true });
 
-        const ticketLog = await interaction.guild.channels
-          .fetch(process.env.TICKET_LOG_CHANNEL_ID)
-          .catch(() => null);
+        const ticketLog = await interaction.guild.channels.fetch(process.env.TICKET_LOG_CHANNEL_ID).catch(() => null);
 
         const buffer = await gerarTranscript(interaction.channel);
         const arquivo = new AttachmentBuilder(buffer, {
@@ -300,28 +247,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
             .setTitle("🎫 Ticket fechado")
             .setDescription(
               `📁 Canal: **${interaction.channel.name}**\n` +
-                `👤 Fechado por: ${interaction.user}\n` +
-                `🕒 Data: <t:${Math.floor(Date.now() / 1000)}:F>`
+              `👤 Fechado por: ${interaction.user}\n` +
+              `🕒 Data: <t:${Math.floor(Date.now() / 1000)}:F>`
             )
             .setColor("#e74c3c")
             .setTimestamp();
 
-          await ticketLog.send({
-            embeds: [embed],
-            files: [arquivo],
-          });
+          await ticketLog.send({ embeds: [embed], files: [arquivo] });
         }
 
-        await enviarLog(
-          interaction.guild,
-          "🔒 Ticket fechado",
-          `📁 Canal: **${interaction.channel.name}**\n👤 Fechado por: ${interaction.user}`,
-          "#e74c3c"
-        );
+        await enviarLog(interaction.guild, "🔒 Ticket fechado", `📁 Canal: **${interaction.channel.name}**\n👤 Fechado por: ${interaction.user}`, "#e74c3c");
 
-        await interaction.editReply({
-          content: "🔒 Fechando ticket e salvando transcript...",
-        });
+        await interaction.editReply({ content: "🔒 Fechando ticket e salvando transcript..." });
 
         setTimeout(() => {
           interaction.channel.delete().catch(() => {});
@@ -336,15 +273,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const categoria = interaction.values[0];
 
         const existente = interaction.guild.channels.cache.find(
-          (c) =>
-            c.topic === `ticket:${interaction.user.id}` &&
-            c.name.startsWith("ticket-")
+          (c) => c.topic === `ticket:${interaction.user.id}` && c.name.startsWith("ticket-")
         );
 
         if (existente) {
-          return interaction.editReply({
-            content: `⚠️ Você já tem um ticket aberto: ${existente}`,
-          });
+          return interaction.editReply({ content: `⚠️ Você já tem um ticket aberto: ${existente}` });
         }
 
         const nomes = {
@@ -358,10 +291,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           type: ChannelType.GuildText,
           topic: `ticket:${interaction.user.id}`,
           permissionOverwrites: [
-            {
-              id: interaction.guild.id,
-              deny: [PermissionsBitField.Flags.ViewChannel],
-            },
+            { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
             {
               id: interaction.user.id,
               allow: [
@@ -377,8 +307,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setTitle("🎫 Ticket Aberto")
           .setDescription(
             `Olá ${interaction.user}, seu ticket foi criado com sucesso.\n\n` +
-              `Categoria: **${nomes[categoria]}**\n\n` +
-              `Explique sua dúvida com detalhes e aguarde atendimento.`
+            `Categoria: **${nomes[categoria]}**\n\n` +
+            `Explique sua dúvida com detalhes e aguarde atendimento.`
           )
           .setColor("#7d3cff")
           .setFooter({ text: "Purple Store • Atendimento" });
@@ -391,22 +321,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
             .setStyle(ButtonStyle.Danger)
         );
 
-        await canal.send({
-          content: `${interaction.user}`,
-          embeds: [embed],
-          components: [row],
-        });
+        await canal.send({ content: `${interaction.user}`, embeds: [embed], components: [row] });
 
-        await enviarLog(
-          interaction.guild,
-          "🎫 Ticket criado",
-          `👤 Usuário: ${interaction.user}\n📁 Canal: ${canal}\n📌 Categoria: **${nomes[categoria]}**`,
-          "#7d3cff"
-        );
+        await enviarLog(interaction.guild, "🎫 Ticket criado", `👤 Usuário: ${interaction.user}\n📁 Canal: ${canal}\n📌 Categoria: **${nomes[categoria]}**`, "#7d3cff");
 
-        return interaction.editReply({
-          content: `✅ Ticket criado: ${canal}`,
-        });
+        return interaction.editReply({ content: `✅ Ticket criado: ${canal}` });
       }
     }
   } catch (error) {
@@ -414,33 +333,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (interaction.isRepliable()) {
       if (interaction.deferred) {
-        return interaction.editReply({
-          content: "❌ Ocorreu um erro interno.",
-        }).catch(() => {});
+        return interaction.editReply({ content: "❌ Ocorreu um erro interno." }).catch(() => {});
       }
 
       if (!interaction.replied) {
-        return interaction.reply({
-          content: "❌ Ocorreu um erro interno.",
-          ephemeral: true,
-        }).catch(() => {});
+        return interaction.reply({ content: "❌ Ocorreu um erro interno.", ephemeral: true }).catch(() => {});
       }
     }
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Purple Store online!");
-});
-
-app.get("/status", (req, res) => {
-  res.send("OK");
-});
-
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🌐 Purple Store web ligada na porta ${PORT}`);
-});
-
-client.login(process.env.DISCORD_TOKEN);
+if (!process.env.DISCORD_TOKEN) {
+  console.error("❌ DISCORD_TOKEN não encontrado no Render Environment.");
+} else {
+  client.login(process.env.DISCORD_TOKEN)
+    .then(() => console.log("🔄 Login enviado para o Discord..."))
+    .catch((err) => console.error("❌ ERRO AO LOGAR NO DISCORD:", err));
+}
