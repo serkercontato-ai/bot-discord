@@ -10,7 +10,7 @@ const {
   Events,
 } = require("discord.js");
 
-// 1. SERVIDOR WEB IMEDIATO (Para o Render não dar erro de porta)
+// 1. SERVIDOR WEB IMEDIATO (Evita o erro de "No open ports detected")
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -31,20 +31,22 @@ const client = new Client({
 const verificacoes = new Map();
 
 client.once(Events.ClientReady, () => {
-  console.log(`✅ BOT CONECTADO: ${client.user.tag}`);
+  console.log(`✅ BOT LOGADO COM SUCESSO: ${client.user.tag}`);
 });
 
-// 3. LÓGICA DE INTERAÇÃO (Botões e Comandos)
+// 3. EVENTOS (Verificação)
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
     if (interaction.isChatInputCommand() && interaction.commandName === "verificacao") {
       const embed = new EmbedBuilder()
         .setTitle("🔐 Sistema de Verificação")
-        .setDescription("Clique abaixo para se verificar.")
+        .setDescription("Clique no botão abaixo para verificar sua conta.")
         .setColor("#7d3cff");
+
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId("iniciar_verificacao").setLabel("Verificar").setStyle(ButtonStyle.Primary)
       );
+
       return interaction.reply({ embeds: [embed], components: [row] });
     }
 
@@ -57,15 +59,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
         verificacoes.set(interaction.user.id, codigo);
 
         const opcoes = [codigo];
-        while (opcoes.size < 4) {
+        while (opcoes.length < 4) {
             let cap = "";
             for (let i = 0; i < 4; i++) cap += letras[Math.floor(Math.random() * letras.length)];
-            opcoes.push(cap);
+            if (!opcoes.includes(cap)) opcoes.push(cap);
         }
-        const botoes = [...new Set(opcoes)].slice(0,4).sort(() => Math.random() - 0.5);
+        const botoesParaExibir = opcoes.sort(() => Math.random() - 0.5);
 
         const row = new ActionRowBuilder().addComponents(
-          botoes.map(opt => new ButtonBuilder().setCustomId(`v_${opt}`).setLabel(opt).setStyle(ButtonStyle.Secondary))
+          botoesParaExibir.map(opt => 
+            new ButtonBuilder().setCustomId(`v_${opt}`).setLabel(opt).setStyle(ButtonStyle.Secondary)
+          )
         );
 
         return interaction.reply({ content: `Confirme o código: **${codigo}**`, components: [row], ephemeral: true });
@@ -75,19 +79,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const escolhido = interaction.customId.replace("v_", "");
         const correto = verificacoes.get(interaction.user.id);
 
-        if (escolhido !== correto) return interaction.reply({ content: "❌ Errado.", ephemeral: true });
+        if (escolhido !== correto) return interaction.reply({ content: "❌ Código errado.", ephemeral: true });
 
-        const cargo = interaction.guild.roles.cache.get(process.env.VERIFICADO_ROLE_ID);
-        if (cargo) await interaction.member.roles.add(cargo);
+        const cargoId = process.env.VERIFICADO_ROLE_ID;
+        const cargo = interaction.guild.roles.cache.get(cargoId);
         
-        return interaction.reply({ content: "✅ Verificado!", ephemeral: true });
+        if (cargo) {
+            await interaction.member.roles.add(cargo);
+            return interaction.reply({ content: "✅ Você foi verificado!", ephemeral: true });
+        } else {
+            return interaction.reply({ content: "❌ Erro: Cargo não encontrado no servidor.", ephemeral: true });
+        }
       }
     }
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error("Erro na interação:", err);
+  }
 });
 
-// 4. LOGIN (Em paralelo)
-console.log("🔑 Tentando logar bot...");
+// 4. LOGIN COM TRATAMENTO DE ERRO
+console.log("🔑 Tentando autenticar no Discord...");
 client.login(process.env.DISCORD_TOKEN).catch(err => {
-  console.error("❌ Erro no login do Discord:", err.message);
+  console.log("❌ FALHA NO LOGIN DO BOT:");
+  console.log(err); // Aqui vai aparecer o erro real se o token estiver ruim ou intents bloqueadas
 });
