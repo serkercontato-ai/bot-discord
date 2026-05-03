@@ -4,7 +4,6 @@ const express = require("express");
 const {
   Client,
   GatewayIntentBits,
-  Events,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -12,27 +11,12 @@ const {
   StringSelectMenuBuilder,
   ChannelType,
   PermissionsBitField,
+  Events,
   AttachmentBuilder,
 } = require("discord.js");
 
-// WEB
 const app = express();
 
-app.get("/", (req, res) => {
-  res.send("Purple Store online!");
-});
-
-app.get("/status", (req, res) => {
-  res.send("OK");
-});
-
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🌐 Servidor Web ativo na porta ${PORT}`);
-});
-
-// BOT
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
@@ -40,37 +24,26 @@ const client = new Client({
 const verificacoes = new Map();
 
 client.once(Events.ClientReady, () => {
-  console.log(`✅ Purple Store online como ${client.user.tag}`);
+  console.log(`✅ Purple Store logado como ${client.user.tag}`);
 });
 
 function gerarCodigo() {
   const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let codigo = "";
-
   for (let i = 0; i < 4; i++) {
     codigo += letras[Math.floor(Math.random() * letras.length)];
   }
-
   return codigo;
 }
 
 function gerarOpcoes(codigoCorreto) {
   const opcoes = new Set([codigoCorreto]);
-
-  while (opcoes.size < 4) {
-    opcoes.add(gerarCodigo());
-  }
-
+  while (opcoes.size < 4) opcoes.add(gerarCodigo());
   return [...opcoes].sort(() => Math.random() - 0.5);
 }
 
 async function enviarLog(guild, titulo, descricao, cor = "#7d3cff") {
-  if (!process.env.LOG_CHANNEL_ID) return;
-
-  const canal = await guild.channels
-    .fetch(process.env.LOG_CHANNEL_ID)
-    .catch(() => null);
-
+  const canal = await guild.channels.fetch(process.env.LOG_CHANNEL_ID).catch(() => null);
   if (!canal) return;
 
   const embed = new EmbedBuilder()
@@ -441,61 +414,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     if (interaction.isRepliable()) {
       if (interaction.deferred) {
-        return interaction
-          .editReply({
-            content: "❌ Ocorreu um erro interno.",
-          })
-          .catch(() => {});
+        return interaction.editReply({
+          content: "❌ Ocorreu um erro interno.",
+        }).catch(() => {});
       }
 
       if (!interaction.replied) {
-        return interaction
-          .reply({
-            content: "❌ Ocorreu um erro interno.",
-            ephemeral: true,
-          })
-          .catch(() => {});
+        return interaction.reply({
+          content: "❌ Ocorreu um erro interno.",
+          ephemeral: true,
+        }).catch(() => {});
       }
     }
   }
 });
 
-// LOGIN DISCORD COM RETRY
-let tentandoLogin = false;
-
-async function ligarDiscord() {
-  if (tentandoLogin) return;
-  tentandoLogin = true;
-
-  try {
-    if (!process.env.DISCORD_TOKEN) {
-      console.log("❌ DISCORD_TOKEN não encontrado.");
-      tentandoLogin = false;
-      return;
-    }
-
-    console.log("🔑 Tentando conectar no Discord...");
-
-    await client.login(process.env.DISCORD_TOKEN);
-
-    console.log("🤖 Login enviado com sucesso.");
-  } catch (err) {
-    console.log("❌ Erro ao conectar no Discord:");
-    console.log(err);
-
-    tentandoLogin = false;
-
-    console.log("🔁 Tentando novamente em 10 segundos...");
-    setTimeout(ligarDiscord, 10000);
-  }
-}
-
-client.on("error", (err) => {
-  console.log("❌ Erro do client Discord:", err);
+app.get("/", (req, res) => {
+  res.send("Purple Store online!");
 });
 
-client.on("shardError", (err) => {
-  console.log("❌ Erro de shard:", err);
+app.get("/status", (req, res) => {
+  res.send("OK");
 });
 
-ligarDiscord();
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🌐 Purple Store web ligada na porta ${PORT}`);
+});
+
+client.login(process.env.DISCORD_TOKEN);
